@@ -104,7 +104,10 @@ class WebGraph():
 
         else:
             v = torch.zeros(n)
-            # FIXME: implement Task 2
+            self.search(query)
+            
+            
+            
         
         v_sum = torch.sum(v)
         assert(v_sum>0)
@@ -141,35 +144,34 @@ class WebGraph():
 
             # define a such that it is 1 if row of P sums to zero, 0 otherwise
             # a = torch.tensor([1 for row in self.P])
-            print("SELF.P", self.P)
             a = []
             for row in self.P:
                 a_val = 1 if row.coalesce().values().size(dim = 0) == 0 else 0
                 a.append(a_val)
-            print(a)
             a_tensor = torch.tensor(a)
 
             for i in range(max_iterations):
                 xprev = x.detach().clone()
+                print(xprev)
 
                 # compute the new x vector using Eq (5.1)
                 # FIXME: Task 1
                 # HINT: this can be done with a single call to the `torch.sparse.addmm` function,
                 # but you'll have to read the code above to figure out what variables should get passed to that function
                 # and what pre/post processing needs to be done to them
-                theta_xprev = torch.mul(xprev, alpha)
-                theta_xprev_t = torch.t(theta_xprev)
-                # print(theta_xprev.size())
-                # print(a_tensor.size())
-                theta_xprev_t = theta_xprev_t.to(float)
-                a_tensor = a_tensor.to(float)
+                alpha_xprev = torch.mul(xprev, alpha)
+                alpha_xprev_t = torch.t(alpha_xprev)
 
-                theta_xprev_a = torch.matmul(theta_xprev_t, a_tensor)
-                theta_xprev_a_plus_alpha = torch.add(theta_xprev_a, alpha)
-                mat_to_add = torch.t(torch.mul(v, theta_xprev_a_plus_alpha))
+
+                alpha_xprev_t = alpha_xprev_t.to(float)
+                a_tensor = a_tensor.to(float)
+                alpha_xprev_a = torch.matmul(alpha_xprev_t, a_tensor)
+                alpha_xprev_a_plus_constant = torch.add(alpha_xprev_a, 1 - alpha)
+
+                mat_to_add = torch.t(torch.mul(v, alpha_xprev_a_plus_constant))
                 mat_to_add = mat_to_add.view(6,1).to(float)
                 mat1 = torch.t(self.P).to(float)
-                mat2 = theta_xprev.to(float)
+                mat2 = alpha_xprev.to(float)
 
                 x = torch.sparse.addmm(mat_to_add, mat1, mat2)
     
@@ -181,7 +183,9 @@ class WebGraph():
                 if residual < epsilon:
                     break
 
-            x = x0.squeeze()
+            print(x)
+            x = x.squeeze()
+            print(x)
             return x
 
 
