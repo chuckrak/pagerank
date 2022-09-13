@@ -104,10 +104,12 @@ class WebGraph():
 
         else:
             v = torch.zeros(n)
-            self.search(query)
+            for index in range(n):
+                url = self._index_to_url(index)
+                if url_satisfies_query(url, query):
+                    v[index] = 1
             
-            
-            
+
         
         v_sum = torch.sum(v)
         assert(v_sum>0)
@@ -152,13 +154,6 @@ class WebGraph():
 
             for i in range(max_iterations):
                 xprev = x.detach().clone()
-                print(xprev)
-
-                # compute the new x vector using Eq (5.1)
-                # FIXME: Task 1
-                # HINT: this can be done with a single call to the `torch.sparse.addmm` function,
-                # but you'll have to read the code above to figure out what variables should get passed to that function
-                # and what pre/post processing needs to be done to them
                 alpha_xprev = torch.mul(xprev, alpha)
                 alpha_xprev_t = torch.t(alpha_xprev)
 
@@ -169,7 +164,7 @@ class WebGraph():
                 alpha_xprev_a_plus_constant = torch.add(alpha_xprev_a, 1 - alpha)
 
                 mat_to_add = torch.t(torch.mul(v, alpha_xprev_a_plus_constant))
-                mat_to_add = mat_to_add.view(6,1).to(float)
+                mat_to_add = mat_to_add.view(n,1).to(float)
                 mat1 = torch.t(self.P).to(float)
                 mat2 = alpha_xprev.to(float)
 
@@ -183,9 +178,7 @@ class WebGraph():
                 if residual < epsilon:
                     break
 
-            print(x)
             x = x.squeeze()
-            print(x)
             return x
 
 
