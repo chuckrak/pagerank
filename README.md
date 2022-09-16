@@ -612,6 +612,7 @@ Your goal should be to discover what topics that www.lawfareblog.com considers t
    INFO:root:rank=7 pagerank=8.4175e+00 url=www.lawfareblog.com/our-comments-policy
    INFO:root:rank=8 pagerank=8.4175e+00 url=www.lawfareblog.com/upcoming-events
    INFO:root:rank=9 pagerank=8.4175e+00 url=www.lawfareblog.com/about-lawfare-brief-history-term-and-site
+   
    $ python3 pagerank.py --data=data/lawfareblog.csv.gz --verbose --alpha=0.99999
    DEBUG:root:computing indices
    DEBUG:root:computing values
@@ -1625,6 +1626,7 @@ Your goal should be to discover what topics that www.lawfareblog.com considers t
    INFO:root:rank=7 pagerank=1.0717e+01 url=www.lawfareblog.com/our-comments-policy
    INFO:root:rank=8 pagerank=1.0717e+01 url=www.lawfareblog.com/upcoming-events
    INFO:root:rank=9 pagerank=1.0717e+01 url=www.lawfareblog.com/topics
+   
    $ python3 pagerank.py --data=data/lawfareblog.csv.gz --verbose --filter_ratio=0.2
    DEBUG:root:computing indices
    DEBUG:root:computing values
@@ -1717,6 +1719,7 @@ Your goal should be to discover what topics that www.lawfareblog.com considers t
    INFO:root:rank=7 pagerank=1.7657e+00 url=www.lawfareblog.com/congress-us-policy-toward-syria-and-turkey-overview-recent-hearings
    INFO:root:rank=8 pagerank=1.6809e+00 url=www.lawfareblog.com/summary-david-holmess-deposition-testimony
    INFO:root:rank=9 pagerank=9.8355e-01 url=www.lawfareblog.com/events
+   
    $ python3 pagerank.py --data=data/lawfareblog.csv.gz --verbose --filter_ratio=0.2 --alpha=0.99999
    DEBUG:root:computing indices
    DEBUG:root:computing values
