@@ -9,8 +9,9 @@ import math
 import torch
 import gzip
 import csv
-
+import gensim.downloader
 import logging
+from collections import defaultdict
 
 
 class WebGraph():
@@ -25,6 +26,7 @@ class WebGraph():
 
         self.url_dict = {}
         indices = []
+        self.vectors = gensim.downloader.load('word2vec-google-news-300')
 
         from collections import defaultdict
         target_counts = defaultdict(lambda: 0)
@@ -106,7 +108,7 @@ class WebGraph():
             v = torch.zeros(n)
             for index in range(n):
                 url = self._index_to_url(index)
-                if url_satisfies_query(url, query):
+                if url_satisfies_query(url, query, self.vectors):
                     v[index] = 1
             
 
@@ -182,27 +184,44 @@ class WebGraph():
             return x
 
 
-    def search(self, pi, query='', max_results=10):
+    def search(self, pi, query='', max_results=10, p = 30):
         '''
         Logs all urls that match the query.
         Results are displayed in sorted order according to the pagerank vector pi.
         '''
         n = self.P.shape[0]
+        k = min(max_results, n)
         vals,indices = torch.topk(pi,n)
+        urls = [self._index_to_url(index.item()) for index in indices]
 
+        if query == '':
+            scores = [val.item() for val in vals]
+        else:
+            similar_words = self.vectors.most_similar(query)
+            scores = []
+            for i, url in enumerate(urls):
+                score = 0
+                for word in similar_words:
+                    word, similarity = word
+                    appearances = url.count(word)
+                    score += appearances * (similarity ** p)
+                    scores.append(vals[i].item() * score)
+
+        
+        scores_urls_sorted = sorted([(scores[i.item()], self._index_to_url(i.item())) for i in indices], key=lambda x: x[0], reverse=True)
         matches = 0
         for i in range(n):
             if matches >= max_results:
                 break
             index = indices[i].item()
-            url = self._index_to_url(index)
-            pagerank = vals[i].item()
-            if url_satisfies_query(url,query):
-                logging.info(f'rank={matches} pagerank={pagerank:0.4e} url={url}')
+            url = scores_urls_sorted[i][1]
+            if url_satisfies_query(url,query, self.vectors, True):
+                score = scores_urls_sorted[i][0]
+                logging.info(f'rank={matches} pagerank={score:0.4e} url={url}')
                 matches += 1
 
 
-def url_satisfies_query(url, query):
+def url_satisfies_query(url, query, vectors=None, check_similar=False):
     '''
     This functions supports a moderately sophisticated syntax for searching urls for a query string.
     The function returns True if any word in the query string is present in the url.
@@ -229,13 +248,24 @@ def url_satisfies_query(url, query):
     '''
     satisfies = False
     terms = query.split()
+    num_terms = 0
+    if check_similar:
+    	for term in terms:
+            if term[0] != '-':
+                related_terms = vectors.most_similar(term)
+                related_terms.append((term, 1.0))
+                num_terms+=1
+                for word in related_terms:
+            	    if word[0] in url:
+            	        satisfies = True
+    else:
+        for term in terms:
+            if term[0] != '-':
+                num_terms += 1
+                if term in url:
+                    satisfies = True
+                            
 
-    num_terms=0
-    for term in terms:
-        if term[0] != '-':
-            num_terms+=1
-            if term in url:
-                satisfies = True
     if num_terms==0:
         satisfies=True
 
